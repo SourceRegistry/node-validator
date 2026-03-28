@@ -86,6 +86,25 @@ try {
 }
 ```
 
+Use `safeParseFormData()` or `parseFormData()` when the payload starts as `FormData`:
+
+```ts
+const formData = new FormData();
+formData.set("name", " Ada ");
+formData.append("roles", "admin");
+formData.append("roles", "user");
+
+const result = Validator.safeParseFormData(
+  Validator.object({
+    name: Validator.string({ trim: true, non_empty: true }),
+    roles: Validator.array(Validator.enum(["admin", "user"] as const), { min: 1 }),
+  }),
+  formData
+);
+```
+
+Repeated `FormData` keys are exposed to validators as arrays in insertion order. Single entries remain single values.
+
 ## Core Validators
 
 ### Strings
@@ -219,7 +238,9 @@ Paths are rooted at `$` and include object keys and array indexes.
 | `Validator.transform(base, mapper, message?, code?)` | Map validated input into a new output type. |
 | `Validator.refine(base, predicate, message, code?)` | Add a custom predicate to an existing validator. |
 | `Validator.safeParse(validator, value)` | Return `{ success, data | errors }`. |
+| `Validator.safeParseFormData(validator, value)` | Convert `FormData` to an object and return `{ success, data | errors }`. |
 | `Validator.parse(validator, value)` | Return parsed data or throw `SchemaValidationError`. |
+| `Validator.parseFormData(validator, value)` | Convert `FormData` to an object and return parsed data or throw. |
 | `ok(data)` | Build a success result manually. |
 | `fail(message, path, code?)` | Build a failure result manually. |
 | `runValidation(validator, value, path?)` | Execute a validator directly. |

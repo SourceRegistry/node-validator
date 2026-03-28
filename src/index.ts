@@ -32,6 +32,7 @@ export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
  * Internal path representation used while walking nested values.
  */
 export type ValidationPath = Array<string | number>;
+type FormDataValue = string | Blob;
 
 /**
  * Runtime validator function.
@@ -143,6 +144,21 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 const testPattern = (pattern: RegExp, value: string) => {
     const flags = pattern.flags.replace(/[gy]/g, "");
     return new RegExp(pattern.source, flags).test(value);
+};
+
+const formDataToObject = (value: FormData) => {
+    const output: Record<string, FormDataValue | FormDataValue[]> = {};
+
+    for (const [key, entry] of value.entries()) {
+        const current = output[key];
+        if (current === undefined) {
+            output[key] = entry;
+            continue;
+        }
+        output[key] = Array.isArray(current) ? [...current, entry] : [current, entry];
+    }
+
+    return output;
 };
 
 /**
@@ -457,10 +473,29 @@ export const Validator = {
         runValidation(validator, value, []),
 
     /**
+     * Runs a validator against a `FormData` payload and returns a result object.
+     * Repeated keys are exposed as arrays in insertion order.
+     */
+    safeParseFormData: <T>(validator: Validator<T>, value: FormData): ValidationResult<T> =>
+        runValidation(validator, formDataToObject(value), []),
+
+    /**
      * Runs a validator and throws `SchemaValidationError` on failure.
      */
     parse: <T>(validator: Validator<T>, value: unknown): T => {
         const result = runValidation(validator, value, []);
+        if (isFailure(result)) {
+            throw new SchemaValidationError(result.errors);
+        }
+        return result.data;
+    },
+
+    /**
+     * Runs a validator against a `FormData` payload and throws on failure.
+     * Repeated keys are exposed as arrays in insertion order.
+     */
+    parseFormData: <T>(validator: Validator<T>, value: FormData): T => {
+        const result = runValidation(validator, formDataToObject(value), []);
         if (isFailure(result)) {
             throw new SchemaValidationError(result.errors);
         }

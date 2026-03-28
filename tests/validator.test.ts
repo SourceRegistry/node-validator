@@ -353,6 +353,58 @@ describe("validator", () => {
         }
     });
 
+    it("parses FormData payloads through object validators", () => {
+        const formData = new FormData();
+        formData.set("name", " Ada ");
+        formData.append("roles", "admin");
+        formData.append("roles", "user");
+
+        const validator = Validator.object({
+            name: Validator.string({trim: true, non_empty: true}),
+            roles: Validator.array(Validator.enum(["admin", "user"] as const), {min: 1}),
+        });
+
+        expect(Validator.safeParseFormData(validator, formData)).toEqual({
+            success: true,
+            data: {
+                name: "Ada",
+                roles: ["admin", "user"],
+            },
+        });
+        expect(Validator.parseFormData(validator, formData)).toEqual({
+            name: "Ada",
+            roles: ["admin", "user"],
+        });
+    });
+
+    it("preserves single FormData entries and files while reporting validation failures", () => {
+        const avatar = new File(["avatar"], "avatar.txt", {type: "text/plain"});
+        const formData = new FormData();
+        formData.set("name", "Ada");
+        formData.set("avatar", avatar);
+        formData.append("roles", "admin");
+        formData.append("roles", "guest");
+
+        const validator = Validator.object({
+            name: Validator.string(),
+            roles: Validator.array(Validator.enum(["admin", "user"] as const), {min: 1}),
+        }, {unknownKeys: "allow"});
+
+        expect(Validator.safeParseFormData(validator, formData)).toEqual(expect.objectContaining({
+            success: false,
+            errors: [expect.objectContaining({path: "$.roles[1]", code: "invalid_enum"})],
+        }));
+
+        expect(Validator.parseFormData(
+            Validator.object({name: Validator.string()}, {unknownKeys: "allow"}),
+            formData
+        )).toEqual({
+            name: "Ada",
+            avatar,
+            roles: ["admin", "guest"],
+        });
+    });
+
     it("exposes stable TypeScript inference for core validators", () => {
         const objectValidator = Validator.object({
             id: Validator.number({integer: true}),
