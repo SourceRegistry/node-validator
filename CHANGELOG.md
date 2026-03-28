@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/SourceRegistry/node-validator/compare/v1.1.0...v1.1.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* cover FormData validator release paths ([6a1eea4](https://github.com/SourceRegistry/node-validator/commit/6a1eea4f549e32c564d8ac63f39eaf56680cdf24))
+
 # [1.1.0](https://github.com/SourceRegistry/node-validator/compare/v1.0.0...v1.1.0) (2026-03-28)
 
 
