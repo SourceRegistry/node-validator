@@ -29,21 +29,23 @@ A lightweight, dependency-free runtime validation library for TypeScript and Jav
 npm install @sourceregistry/node-validator
 ```
 
+`Validator` is also exported as `v` for shorter schema definitions.
+
 ## Quick Start
 
 ```ts
-import { Validator } from "@sourceregistry/node-validator";
+import { v } from "@sourceregistry/node-validator";
 
-const userValidator = Validator.object({
-  id: Validator.number({ integer: true, min: 1 }),
-  name: Validator.string({ trim: true, non_empty: true, min: 2 }),
-  email: Validator.optional(
-    Validator.string({ pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })
+const userValidator = v.object({
+  id: v.number({ integer: true, min: 1 }),
+  name: v.string({ trim: true, non_empty: true, min: 2 }),
+  email: v.optional(
+    v.string({ pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })
   ),
-  roles: Validator.array(Validator.enum(["admin", "user"] as const), { min: 1 }),
+  roles: v.array(v.enum(["admin", "user"] as const), { min: 1 }),
 });
 
-const result = Validator.safeParse(userValidator, {
+const result = v.safeParse(userValidator, {
   id: 1,
   name: " Ada ",
   roles: ["admin"],
@@ -61,7 +63,9 @@ if (result.success) {
 Use `safeParse()` when validation failures are part of normal control flow:
 
 ```ts
-const result = Validator.safeParse(Validator.number({ min: 1 }), 0);
+import { v } from "@sourceregistry/node-validator";
+
+const result = v.safeParse(v.number({ min: 1 }), 0);
 
 if (!result.success) {
   console.log(result.errors);
@@ -71,11 +75,11 @@ if (!result.success) {
 Use `parse()` when invalid input should fail fast:
 
 ```ts
-import { SchemaValidationError, Validator } from "@sourceregistry/node-validator";
+import { SchemaValidationError, v } from "@sourceregistry/node-validator";
 
 try {
-  const port = Validator.parse(
-    Validator.number({ integer: true, min: 1, max: 65535 }),
+  const port = v.parse(
+    v.number({ integer: true, min: 1, max: 65535 }),
     3000
   );
   console.log(port);
@@ -94,10 +98,10 @@ formData.set("name", " Ada ");
 formData.append("roles", "admin");
 formData.append("roles", "user");
 
-const result = Validator.safeParseFormData(
-  Validator.object({
-    name: Validator.string({ trim: true, non_empty: true }),
-    roles: Validator.array(Validator.enum(["admin", "user"] as const), { min: 1 }),
+const result = v.safeParseFormData(
+  v.object({
+    name: v.string({ trim: true, non_empty: true }),
+    roles: v.array(v.enum(["admin", "user"] as const), { min: 1 }),
   }),
   formData
 );
@@ -110,7 +114,7 @@ Repeated `FormData` keys are exposed to validators as arrays in insertion order.
 ### Strings
 
 ```ts
-const username = Validator.string({
+const username = v.string({
   trim: true,
   non_empty: true,
   min: 3,
@@ -122,7 +126,7 @@ const username = Validator.string({
 ### Numbers
 
 ```ts
-const quantity = Validator.number({
+const quantity = v.number({
   integer: true,
   min: 0,
   max: 100,
@@ -132,40 +136,40 @@ const quantity = Validator.number({
 ### Arrays and Tuples
 
 ```ts
-const tags = Validator.array(
-  Validator.string({ trim: true, non_empty: true }),
+const tags = v.array(
+  v.string({ trim: true, non_empty: true }),
   { max: 10 }
 );
 
-const point = Validator.tuple([
-  Validator.number(),
-  Validator.number(),
+const point = v.tuple([
+  v.number(),
+  v.number(),
 ]);
 ```
 
 ### Objects and Records
 
 ```ts
-const config = Validator.object(
+const config = v.object(
   {
-    host: Validator.string({ non_empty: true }),
-    port: Validator.number({ integer: true, min: 1, max: 65535 }),
+    host: v.string({ non_empty: true }),
+    port: v.number({ integer: true, min: 1, max: 65535 }),
   },
   { unknownKeys: "error" }
 );
 
-const envMap = Validator.record(Validator.string(), {
-  key: Validator.string({ pattern: /^[A-Z_]+$/ }),
+const envMap = v.record(v.string(), {
+  key: v.string({ pattern: /^[A-Z_]+$/ }),
 });
 ```
 
 ### Optional, Nullable, and Defaults
 
 ```ts
-const nickname = Validator.optional(Validator.string());
-const archivedAt = Validator.nullable(Validator.string());
-const retries = Validator.withDefault(
-  Validator.number({ integer: true, min: 0 }),
+const nickname = v.optional(v.string());
+const archivedAt = v.nullable(v.string());
+const retries = v.withDefault(
+  v.number({ integer: true, min: 0 }),
   3
 );
 ```
@@ -173,20 +177,20 @@ const retries = Validator.withDefault(
 ### Literals, Enums, Unions, Transforms, and Refinements
 
 ```ts
-const mode = Validator.enum(["development", "production"] as const);
+const mode = v.enum(["development", "production"] as const);
 
-const id = Validator.union(
-  Validator.number({ integer: true, min: 1 }),
-  Validator.string({ non_empty: true })
+const id = v.union(
+  v.number({ integer: true, min: 1 }),
+  v.string({ non_empty: true })
 );
 
-const normalizedEmail = Validator.transform(
-  Validator.string({ trim: true, non_empty: true }),
+const normalizedEmail = v.transform(
+  v.string({ trim: true, non_empty: true }),
   (value) => value.toLowerCase()
 );
 
-const evenNumber = Validator.refine(
-  Validator.number({ integer: true }),
+const evenNumber = v.refine(
+  v.number({ integer: true }),
   (value) => value % 2 === 0,
   "Expected an even number",
   "not_even"
@@ -222,6 +226,7 @@ Paths are rooted at `$` and include object keys and array indexes.
 
 | Export | Description |
 | --- | --- |
+| `v` | Shorthand alias for `Validator`. |
 | `Validator.string(options?)` | Validate strings with trimming, length, and regex options. |
 | `Validator.number(options?)` | Validate numbers with min, max, integer, and finite checks. |
 | `Validator.boolean()` | Validate boolean values. |
