@@ -380,8 +380,8 @@ describe("validator", () => {
         });
     });
 
-    it("preserves single FormData entries and files while reporting validation failures", () => {
-        const avatar = new File(["avatar"], "avatar.txt", {type: "text/plain"});
+    it("preserves single FormData entries and blobs while reporting validation failures", async () => {
+        const avatar = new Blob(["avatar"], {type: "text/plain"});
         const formData = new FormData();
         formData.set("name", "Ada");
         formData.set("avatar", avatar);
@@ -398,14 +398,19 @@ describe("validator", () => {
             errors: [expect.objectContaining({path: "$.roles[1]", code: "invalid_enum"})],
         }));
 
-        expect(Validator.parseFormData(
-            Validator.object({name: Validator.string()}, {unknownKeys: "allow"}),
-            formData
-        )).toEqual({
+        const parsed = Validator.parseFormData(Validator.object(
+            {name: Validator.string()},
+            {unknownKeys: "allow"}
+        ), formData);
+        const avatarValue = parsed.avatar as Blob;
+
+        expect(parsed).toEqual(expect.objectContaining({
             name: "Ada",
-            avatar,
             roles: ["admin", "guest"],
-        });
+        }));
+        expect(avatarValue).toBeInstanceOf(Blob);
+        expect(avatarValue.type).toBe("text/plain");
+        await expect(avatarValue.text()).resolves.toBe("avatar");
     });
 
     it("throws SchemaValidationError when parseFormData validation fails", () => {
