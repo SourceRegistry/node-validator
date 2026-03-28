@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/SourceRegistry/node-validator/compare/v1.1.3...v1.1.4) (2026-03-28)
+
+
+### Bug Fixes
+
+* support node 18 formdata tests ([0f36da5](https://github.com/SourceRegistry/node-validator/commit/0f36da5b5f7a59442e17595b1d7b84f8a54a8f96))
+
 ## [1.1.3](https://github.com/SourceRegistry/node-validator/compare/v1.1.2...v1.1.3) (2026-03-28)
 
 
