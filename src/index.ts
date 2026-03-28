@@ -502,3 +502,8 @@ export const Validator = {
         return result.data;
     }
 };
+
+/**
+ * Shorthand alias for `Validator`.
+ */
+export const v = Validator;

@@ -5,6 +5,7 @@ import {
     ok,
     runValidation,
     SchemaValidationError,
+    v,
     Validator
 } from "../src";
 
@@ -30,6 +31,7 @@ describe("validator", () => {
         expect(isFailure(success)).toBe(false);
         expect(isFailure(failure)).toBe(true);
         expect(runValidation(Validator.literal("value"), "value")).toEqual(success);
+        expect(v).toBe(Validator);
     });
 
     it("validates strings across success and failure branches", () => {
@@ -442,14 +444,19 @@ describe("validator", () => {
         const tupleValidator = Validator.tuple([Validator.string(), Validator.number()]);
         const unionValidator = Validator.union(Validator.string(), Validator.number());
         const transformedValidator = Validator.transform(Validator.string(), (value) => value.length);
+        const aliasObjectValidator = v.object({
+            active: v.boolean(),
+        });
         const parsedObject = Validator.parse(objectValidator, {id: 1, name: "Ada"});
         const parsedAllowedObject = Validator.parse(allowedObjectValidator, {id: 1, extra: true});
         const parsedTuple = Validator.parse(tupleValidator, ["a", 1] as [string, number]);
         const parsedUnion = Validator.parse(unionValidator, "a" as unknown);
         const parsedTransformed = Validator.parse(transformedValidator, "abcd");
+        const parsedAliasObject = v.parse(aliasObjectValidator, {active: true});
         const tupleCheck: [string, number] = parsedTuple;
         const unionCheck: string | number = parsedUnion;
         const transformedCheck: number = parsedTransformed;
+        const aliasObjectCheck: {active: boolean} = parsedAliasObject;
         const objectCheck: {
             id: number;
             name: string;
@@ -458,12 +465,14 @@ describe("validator", () => {
         const allowedObjectCheck: {
             id: number;
         } & Record<string, unknown> = parsedAllowedObject;
+        void aliasObjectCheck;
         void objectCheck;
         void allowedObjectCheck;
         void tupleCheck;
         void unionCheck;
         void transformedCheck;
 
+        expect(parsedAliasObject).toEqual({active: true});
         expectTypeOf(parsedUnion).toEqualTypeOf<string | number>();
         expectTypeOf(parsedTransformed).toEqualTypeOf<number>();
     });
