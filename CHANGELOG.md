@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/SourceRegistry/node-validator/compare/v1.1.1...v1.1.2) (2026-03-28)
+
+
+### Bug Fixes
+
+* emit declarations from vite build ([8e18c36](https://github.com/SourceRegistry/node-validator/commit/8e18c36cd651d5117580a457a56f8b568ebde39a))
+
 ## [1.1.1](https://github.com/SourceRegistry/node-validator/compare/v1.1.0...v1.1.1) (2026-03-28)
 
 
