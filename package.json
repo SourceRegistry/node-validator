@@ -18,7 +18,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && vite build",
+    "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -47,7 +47,7 @@
   "bugs": {
     "url": "https://github.com/SourceRegistry/node-validator/issues"
   },
-  "homepage": "https://github.com/SourceRegistry/node-validator#readme",
+  "homepage": "https://sourceregistry.github.io/node-validator/",
   "publishConfig": {
     "access": "public"
   },
@@ -66,6 +66,7 @@
     "typedoc": "^0.28.14",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "^3.2.4"
   },
   "release": {
