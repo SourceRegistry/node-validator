@@ -358,6 +358,7 @@ describe("validator", () => {
         formData.set("name", " Ada ");
         formData.append("roles", "admin");
         formData.append("roles", "user");
+        formData.append("roles", "admin");
 
         const validator = Validator.object({
             name: Validator.string({trim: true, non_empty: true}),
@@ -368,12 +369,12 @@ describe("validator", () => {
             success: true,
             data: {
                 name: "Ada",
-                roles: ["admin", "user"],
+                roles: ["admin", "user", "admin"],
             },
         });
         expect(Validator.parseFormData(validator, formData)).toEqual({
             name: "Ada",
-            roles: ["admin", "user"],
+            roles: ["admin", "user", "admin"],
         });
     });
 
@@ -405,6 +406,29 @@ describe("validator", () => {
         });
     });
 
+    it("throws SchemaValidationError when parseFormData validation fails", () => {
+        const formData = new FormData();
+        formData.set("name", "Ada");
+        formData.append("roles", "guest");
+
+        const validator = Validator.object({
+            name: Validator.string(),
+            roles: Validator.array(Validator.enum(["admin", "user"] as const), {min: 1}),
+        });
+
+        expect(() => Validator.parseFormData(validator, formData)).toThrowError(SchemaValidationError);
+
+        try {
+            Validator.parseFormData(validator, formData);
+            throw new Error("Expected validation error");
+        } catch (error) {
+            expect(error).toBeInstanceOf(SchemaValidationError);
+            expect((error as SchemaValidationError).errors).toEqual([
+                expect.objectContaining({path: "$.roles", code: "invalid_type"}),
+            ]);
+        }
+    });
+
     it("exposes stable TypeScript inference for core validators", () => {
         const objectValidator = Validator.object({
             id: Validator.number({integer: true}),
@@ -426,19 +450,21 @@ describe("validator", () => {
         const tupleCheck: [string, number] = parsedTuple;
         const unionCheck: string | number = parsedUnion;
         const transformedCheck: number = parsedTransformed;
+        const objectCheck: {
+            id: number;
+            name: string;
+            nickname?: string | undefined;
+        } = parsedObject;
+        const allowedObjectCheck: {
+            id: number;
+        } & Record<string, unknown> = parsedAllowedObject;
+        void objectCheck;
+        void allowedObjectCheck;
         void tupleCheck;
         void unionCheck;
         void transformedCheck;
 
-        expectTypeOf(parsedObject).toMatchTypeOf<{
-            id: number;
-            name: string;
-            nickname?: string | undefined;
-        }>();
-        expectTypeOf(parsedAllowedObject).toMatchTypeOf<{
-            id: number;
-        } & Record<string, unknown>>();
-        expectTypeOf(parsedUnion).toMatchTypeOf<string | number>();
-        expectTypeOf(parsedTransformed).toMatchTypeOf<number>();
+        expectTypeOf(parsedUnion).toEqualTypeOf<string | number>();
+        expectTypeOf(parsedTransformed).toEqualTypeOf<number>();
     });
 });
