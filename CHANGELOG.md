@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/SourceRegistry/node-validator/compare/v1.1.2...v1.1.3) (2026-03-28)
+
+
+### Bug Fixes
+
+* add v validator alias ([d42bf2e](https://github.com/SourceRegistry/node-validator/commit/d42bf2e2359ab8ed420ed36d9f4df941947c802f))
+
 ## [1.1.2](https://github.com/SourceRegistry/node-validator/compare/v1.1.1...v1.1.2) (2026-03-28)
 
 
