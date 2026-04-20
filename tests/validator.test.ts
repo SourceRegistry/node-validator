@@ -436,6 +436,60 @@ describe("validator", () => {
         }
     });
 
+    it("parses URLSearchParams and URL payloads with repeated keys", () => {
+        const params = new URLSearchParams();
+        params.set("name", " Ada ");
+        params.append("roles", "admin");
+        params.append("roles", "user");
+        params.append("roles", "admin");
+
+        const validator = Validator.object({
+            name: Validator.string({trim: true, non_empty: true}),
+            roles: Validator.array(Validator.enum(["admin", "user"] as const), {min: 1}),
+        });
+
+        expect(Validator.safeParseURLSearchParams(validator, params)).toEqual({
+            success: true,
+            data: {
+                name: "Ada",
+                roles: ["admin", "user", "admin"],
+            },
+        });
+        expect(Validator.parseURLSearchParams(validator, params)).toEqual({
+            name: "Ada",
+            roles: ["admin", "user", "admin"],
+        });
+
+        const url = new URL("https://example.test/?name=Ada&roles=admin&roles=user");
+        expect(Validator.parseURLSearchParams(validator, url)).toEqual({
+            name: "Ada",
+            roles: ["admin", "user"],
+        });
+    });
+
+    it("throws SchemaValidationError when parseURLSearchParams validation fails", () => {
+        const params = new URLSearchParams();
+        params.set("name", "Ada");
+        params.append("roles", "guest");
+
+        const validator = Validator.object({
+            name: Validator.string(),
+            roles: Validator.array(Validator.enum(["admin", "user"] as const), {min: 1}),
+        });
+
+        expect(() => Validator.parseURLSearchParams(validator, params)).toThrowError(SchemaValidationError);
+
+        try {
+            Validator.parseURLSearchParams(validator, params);
+            throw new Error("Expected validation error");
+        } catch (error) {
+            expect(error).toBeInstanceOf(SchemaValidationError);
+            expect((error as SchemaValidationError).errors).toEqual([
+                expect.objectContaining({path: "$.roles", code: "invalid_type"}),
+            ]);
+        }
+    });
+
     it("exposes stable TypeScript inference for core validators", () => {
         const objectValidator = Validator.object({
             id: Validator.number({integer: true}),

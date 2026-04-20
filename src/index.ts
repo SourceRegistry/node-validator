@@ -1,3 +1,5 @@
+import {URLSearchParams} from "node:url";
+
 /**
  * A single validation issue produced by a validator.
  */
@@ -148,6 +150,21 @@ const testPattern = (pattern: RegExp, value: string) => {
 
 const formDataToObject = (value: FormData) => {
     const output: Record<string, FormDataValue | FormDataValue[]> = {};
+
+    for (const [key, entry] of value.entries()) {
+        const current = output[key];
+        if (current === undefined) {
+            output[key] = entry;
+            continue;
+        }
+        output[key] = Array.isArray(current) ? [...current, entry] : [current, entry];
+    }
+
+    return output;
+};
+
+const urlSearchParamsToObject = (value: URLSearchParams) => {
+    const output: Record<string, string | string[]> = {};
 
     for (const [key, entry] of value.entries()) {
         const current = output[key];
@@ -489,7 +506,29 @@ export const Validator = {
         }
         return result.data;
     },
-
+    /**
+     * Runs a validator on a URL or URLSearchParams object and throws `SchemaValidationError` on failure.
+     * @param validator
+     * @param value
+     */
+    parseURLSearchParams: <T>(validator: Validator<T>, value: URLSearchParams | {searchParams: URLSearchParams}) => {
+        const result = Validator.safeParseURLSearchParams(validator,value)
+        if (isFailure(result)) {
+            throw new SchemaValidationError(result.errors);
+        }
+        return result.data;
+    },
+    /**
+     * Runs a validator on a URL or URLSearchParams object  and returns a result object.
+     * Repeated keys are exposed as arrays in insertion order.
+     * @param validator
+     * @param value
+     */
+    safeParseURLSearchParams: <T>(validator: Validator<T>, value: URLSearchParams | {searchParams: URLSearchParams}) => {
+        if ('searchParams' in value) value = value.searchParams;
+        const params = urlSearchParamsToObject(value);
+        return Validator.safeParse<T>(validator, params)
+    },
     /**
      * Runs a validator against a `FormData` payload and throws on failure.
      * Repeated keys are exposed as arrays in insertion order.
