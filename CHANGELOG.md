@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/SourceRegistry/node-validator/compare/v1.1.5...v1.1.6) (2026-04-20)
+
+
+### Bug Fixes
+
+* **url:** preserve repeated search params as arrays ([5565149](https://github.com/SourceRegistry/node-validator/commit/5565149a5286a98fcbce8e1a1b761289b211ab8b))
+
 ## [1.1.5](https://github.com/SourceRegistry/node-validator/compare/v1.1.4...v1.1.5) (2026-03-28)
 
 
