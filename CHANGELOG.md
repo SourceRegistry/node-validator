@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/SourceRegistry/node-validator/compare/v1.1.6...v1.2.0) (2026-04-25)
+
+
+### Features
+
+* added v.custom(), v.any() and better v.union() ([82ed21a](https://github.com/SourceRegistry/node-validator/commit/82ed21a75cb77659ed4853efaa0dc7ee8eb323a1))
+
 ## [1.1.6](https://github.com/SourceRegistry/node-validator/compare/v1.1.5...v1.1.6) (2026-04-20)
 
 
