@@ -35,6 +35,7 @@ export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
  */
 export type ValidationPath = Array<string | number>;
 type FormDataValue = string | Blob;
+type UnionShape = readonly [Validator<any>, Validator<any>, ...Validator<any>[]];
 
 /**
  * Runtime validator function.
@@ -178,6 +179,52 @@ const urlSearchParamsToObject = (value: URLSearchParams) => {
     return output;
 };
 
+function unionValidator<const T extends UnionShape>(validators: T): Validator<InferValidator<T[number]>>;
+function unionValidator<const T extends UnionShape>(...validators: T): Validator<InferValidator<T[number]>>;
+function unionValidator<const T extends UnionShape>(...args: T | [T]): Validator<InferValidator<T[number]>> {
+    const validators: readonly Validator<InferValidator<T[number]>>[] = Array.isArray(args[0])
+        ? args[0] as readonly Validator<InferValidator<T[number]>>[]
+        : args as readonly Validator<InferValidator<T[number]>>[];
+
+    if (validators.length < 2) {
+        throw new TypeError("Validator.union requires at least two validators");
+    }
+
+    return (value, path = []) => {
+        const failures: ValidationFailure[] = [];
+        for (const validator of validators) {
+            const result = runValidation(validator, value, path);
+            if (!isFailure(result)) return ok(result.data);
+            failures.push(result);
+        }
+        return mergeErrors(...failures);
+    };
+}
+
+function customValidator<T>(
+    predicate: (value: unknown) => value is T,
+    message?: string,
+    code?: string
+): Validator<T>;
+function customValidator<T = unknown>(
+    predicate: (value: unknown) => boolean,
+    message?: string,
+    code?: string
+): Validator<T>;
+function customValidator<T>(
+    predicate: (value: unknown) => boolean,
+    message: string = "Invalid input",
+    code: string = "custom"
+): Validator<T> {
+    return (value, path = []) => {
+        try {
+            return predicate(value) ? ok(value as T) : fail(message, path, code);
+        } catch {
+            return fail(message, path, code);
+        }
+    };
+}
+
 /**
  * Runs a validator against a value.
  */
@@ -254,6 +301,17 @@ export const Validator = {
             typeof value === "boolean"
                 ? ok(value)
                 : fail("Expected boolean", path, "invalid_type"),
+
+    /**
+     * Accepts any input value without validation.
+     */
+    any: (): Validator<any> =>
+        (value) => ok(value),
+
+    /**
+     * Validates a value using a custom predicate.
+     */
+    custom: customValidator,
 
     /**
      * Validates a literal value.
@@ -426,16 +484,7 @@ export const Validator = {
     /**
      * Validates a value against either of two validators.
      */
-    union: <const T extends readonly [Validator<any>, Validator<any>, ...Validator<any>[]]>(...validators: T): Validator<InferValidator<T[number]>> =>
-        (value, path = []) => {
-            const failures: ValidationFailure[] = [];
-            for (const validator of validators) {
-                const result = runValidation(validator, value, path);
-                if (!isFailure(result)) return result;
-                failures.push(result);
-            }
-            return mergeErrors(...failures);
-        },
+    union: unionValidator,
 
     /**
      * Maps a validated value into a new output type.

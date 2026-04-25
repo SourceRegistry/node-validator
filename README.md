@@ -184,6 +184,11 @@ const id = v.union(
   v.string({ non_empty: true })
 );
 
+const idAlt = v.union([
+  v.number({ integer: true, min: 1 }),
+  v.string({ non_empty: true }),
+]);
+
 const normalizedEmail = v.transform(
   v.string({ trim: true, non_empty: true }),
   (value) => value.toLowerCase()
@@ -195,6 +200,14 @@ const evenNumber = v.refine(
   "Expected an even number",
   "not_even"
 );
+
+const upload = v.custom<File>(
+  (value): value is File => value instanceof File,
+  "Expected uploaded file",
+  "invalid_type"
+);
+
+const passthroughPayload = v.any();
 ```
 
 ## Error Shape
@@ -230,6 +243,8 @@ Paths are rooted at `$` and include object keys and array indexes.
 | `Validator.string(options?)` | Validate strings with trimming, length, and regex options. |
 | `Validator.number(options?)` | Validate numbers with min, max, integer, and finite checks. |
 | `Validator.boolean()` | Validate boolean values. |
+| `Validator.any()` | Accept any input value without validation. |
+| `Validator.custom(predicate, message?, code?)` | Validate via a custom predicate and return typed output. |
 | `Validator.literal(value)` | Validate one exact literal value. |
 | `Validator.enum(values)` | Validate one value from a string literal set. |
 | `Validator.optional(inner)` | Allow `undefined`. |
@@ -239,7 +254,7 @@ Paths are rooted at `$` and include object keys and array indexes.
 | `Validator.tuple(shape)` | Validate a fixed-length tuple. |
 | `Validator.object(shape, options?)` | Validate plain objects using a validator shape. |
 | `Validator.record(valueValidator, options?)` | Validate object records and optionally validate keys. |
-| `Validator.union(...validators)` | Validate against the first matching validator. |
+| `Validator.union(...validators)` / `Validator.union([validators...])` | Validate against the first matching validator. |
 | `Validator.transform(base, mapper, message?, code?)` | Map validated input into a new output type. |
 | `Validator.refine(base, predicate, message, code?)` | Add a custom predicate to an existing validator. |
 | `Validator.safeParse(validator, value)` | Return `{ success, data | errors }`. |

@@ -105,6 +105,27 @@ describe("validator", () => {
             success: false,
             errors: [expect.objectContaining({code: "invalid_type"})],
         }));
+        expect(Validator.parse(Validator.any(), {id: 1})).toEqual({id: 1});
+        expect(Validator.safeParse(
+            Validator.custom<number>((value): value is number => typeof value === "number" && Number.isFinite(value), "Expected finite number", "invalid_number"),
+            1
+        )).toEqual({success: true, data: 1});
+        expect(Validator.safeParse(
+            Validator.custom<number>((value): value is number => typeof value === "number" && Number.isFinite(value), "Expected finite number", "invalid_number"),
+            Number.POSITIVE_INFINITY
+        )).toEqual(expect.objectContaining({
+            success: false,
+            errors: [expect.objectContaining({code: "invalid_number"})],
+        }));
+        expect(Validator.safeParse(
+            Validator.custom(() => {
+                throw new Error("boom");
+            }, "Custom failed safely", "custom_failed"),
+            "abc"
+        )).toEqual(expect.objectContaining({
+            success: false,
+            errors: [expect.objectContaining({code: "custom_failed"})],
+        }));
 
         expect(Validator.parse(Validator.literal(null), null)).toBeNull();
         expect(Validator.safeParse(Validator.literal("yes"), "no")).toEqual(expect.objectContaining({
@@ -285,6 +306,20 @@ describe("validator", () => {
 
         expect(Validator.safeParse(
             Validator.union(Validator.literal("a"), Validator.literal("b")),
+            "c"
+        )).toEqual(expect.objectContaining({
+            success: false,
+            errors: [
+                expect.objectContaining({code: "invalid_literal"}),
+                expect.objectContaining({code: "invalid_literal"}),
+            ],
+        }));
+        expect(Validator.parse(
+            Validator.union([Validator.literal("a"), Validator.literal("b")]),
+            "a"
+        )).toBe("a");
+        expect(Validator.safeParse(
+            Validator.union([Validator.literal("a"), Validator.literal("b")]),
             "c"
         )).toEqual(expect.objectContaining({
             success: false,
@@ -502,6 +537,11 @@ describe("validator", () => {
         );
         const tupleValidator = Validator.tuple([Validator.string(), Validator.number()]);
         const unionValidator = Validator.union(Validator.string(), Validator.number());
+        const unionTupleValidator = Validator.union([Validator.string(), Validator.number()]);
+        const customNumberValidator = Validator.custom<number>(
+            (value): value is number => typeof value === "number" && Number.isFinite(value)
+        );
+        const anyValidator = Validator.any();
         const transformedValidator = Validator.transform(Validator.string(), (value) => value.length);
         const aliasObjectValidator = v.object({
             active: v.boolean(),
@@ -510,10 +550,16 @@ describe("validator", () => {
         const parsedAllowedObject = Validator.parse(allowedObjectValidator, {id: 1, extra: true});
         const parsedTuple = Validator.parse(tupleValidator, ["a", 1] as [string, number]);
         const parsedUnion = Validator.parse(unionValidator, "a" as unknown);
+        const parsedUnionTuple = Validator.parse(unionTupleValidator, "a" as unknown);
+        const parsedCustomNumber = Validator.parse(customNumberValidator, 1);
+        const parsedAny = Validator.parse(anyValidator, {payload: true} as unknown);
         const parsedTransformed = Validator.parse(transformedValidator, "abcd");
         const parsedAliasObject = v.parse(aliasObjectValidator, {active: true});
         const tupleCheck: [string, number] = parsedTuple;
         const unionCheck: string | number = parsedUnion;
+        const unionTupleCheck: string | number = parsedUnionTuple;
+        const customNumberCheck: number = parsedCustomNumber;
+        const anyCheck: any = parsedAny;
         const transformedCheck: number = parsedTransformed;
         const aliasObjectCheck: {active: boolean} = parsedAliasObject;
         const objectCheck: {
@@ -529,10 +575,16 @@ describe("validator", () => {
         void allowedObjectCheck;
         void tupleCheck;
         void unionCheck;
+        void unionTupleCheck;
+        void customNumberCheck;
+        void anyCheck;
         void transformedCheck;
 
         expect(parsedAliasObject).toEqual({active: true});
         expectTypeOf(parsedUnion).toEqualTypeOf<string | number>();
+        expectTypeOf(parsedUnionTuple).toEqualTypeOf<string | number>();
+        expectTypeOf(parsedCustomNumber).toEqualTypeOf<number>();
+        expectTypeOf(parsedAny).toEqualTypeOf<any>();
         expectTypeOf(parsedTransformed).toEqualTypeOf<number>();
     });
 });
