@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/SourceRegistry/node-validator/compare/v1.2.0...v1.2.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* test coverage ([0b149b0](https://github.com/SourceRegistry/node-validator/commit/0b149b0f89515e63d4470529cf13573504461db0))
+
 # [1.2.0](https://github.com/SourceRegistry/node-validator/compare/v1.1.6...v1.2.0) (2026-04-25)
 
 
