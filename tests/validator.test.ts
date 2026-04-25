@@ -285,6 +285,9 @@ describe("validator", () => {
     });
 
     it("validates unions, transforms, refinement safety, and parse errors", () => {
+        expect(() => Validator.union(Validator.string() as any)).toThrowError(TypeError);
+        expect(() => Validator.union([Validator.string()] as any)).toThrowError(TypeError);
+
         const unionValidator = Validator.union(
             Validator.literal("yes"),
             Validator.number({min: 1}),
